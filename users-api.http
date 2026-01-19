@@ -1,0 +1,179 @@
+### Users API - Ejemplos de Peticiones HTTP
+### Puede ejecutarse con REST Client en VS Code o IntelliJ HTTP Client
+
+### Variables
+@baseUrl = http://localhost:8080
+@messageId = {{$uuid}}
+
+### 1. Health Check
+GET {{baseUrl}}/actuator/health
+Accept: application/json
+
+### 2. Crear Usuario - Admin
+POST {{baseUrl}}/users
+Content-Type: application/json
+x-message-id: {{$uuid}}
+
+{
+  "name": "Admin Principal",
+  "email": "admin@bootcamp.com",
+  "isAdmin": true
+}
+
+### 3. Crear Usuario - Persona
+POST {{baseUrl}}/users
+Content-Type: application/json
+x-message-id: {{$uuid}}
+
+{
+  "name": "Juan Estudiante",
+  "email": "juan.estudiante@email.com",
+  "isAdmin": false
+}
+
+### 4. Crear Usuario - Error (email duplicado)
+POST {{baseUrl}}/users
+Content-Type: application/json
+x-message-id: {{$uuid}}
+
+{
+  "name": "Otro Juan",
+  "email": "juan.estudiante@email.com",
+  "isAdmin": false
+}
+
+### 5. Crear Usuario - Error (email inválido)
+POST {{baseUrl}}/users
+Content-Type: application/json
+x-message-id: {{$uuid}}
+
+{
+  "name": "Usuario Test",
+  "email": "email-invalido",
+  "isAdmin": false
+}
+
+### 6. Crear Usuario - Error (nombre muy largo)
+POST {{baseUrl}}/users
+Content-Type: application/json
+x-message-id: {{$uuid}}
+
+{
+  "name": "Este es un nombre extremadamente largo que excede los 100 caracteres permitidos por el sistema de validación implementado",
+  "email": "test@email.com",
+  "isAdmin": false
+}
+
+### 7. Obtener Usuario por ID (exitoso)
+GET {{baseUrl}}/users/1
+x-message-id: {{$uuid}}
+
+### 8. Obtener Usuario por ID (no existe)
+GET {{baseUrl}}/users/999
+x-message-id: {{$uuid}}
+
+### 9. Verificar existencia de usuarios
+POST {{baseUrl}}/users/check-exists
+Content-Type: application/json
+x-message-id: {{$uuid}}
+
+{
+  "ids": [1, 2, 3, 999, 1000]
+}
+
+### 10. Obtener múltiples usuarios por IDs
+POST {{baseUrl}}/users/by-ids
+Content-Type: application/json
+x-message-id: {{$uuid}}
+
+{
+  "ids": [1, 2, 3]
+}
+
+### 11. Obtener usuarios con lista vacía
+POST {{baseUrl}}/users/by-ids
+Content-Type: application/json
+x-message-id: {{$uuid}}
+
+{
+  "ids": []
+}
+
+### 12. Crear varios usuarios para pruebas
+POST {{baseUrl}}/users
+Content-Type: application/json
+x-message-id: {{$uuid}}
+
+{
+  "name": "Pedro Administrador",
+  "email": "pedro.admin@bootcamp.com",
+  "isAdmin": true
+}
+
+###
+POST {{baseUrl}}/users
+Content-Type: application/json
+x-message-id: {{$uuid}}
+
+{
+  "name": "María Participante",
+  "email": "maria.participante@email.com",
+  "isAdmin": false
+}
+
+###
+POST {{baseUrl}}/users
+Content-Type: application/json
+x-message-id: {{$uuid}}
+
+{
+  "name": "Carlos Developer",
+  "email": "carlos.dev@email.com",
+  "isAdmin": false
+}
+
+###
+POST {{baseUrl}}/users
+Content-Type: application/json
+x-message-id: {{$uuid}}
+
+{
+  "name": "Ana Estudiante",
+  "email": "ana.estudiante@email.com",
+  "isAdmin": false
+}
+
+### 13. Verificar usuarios creados
+POST {{baseUrl}}/users/by-ids
+Content-Type: application/json
+x-message-id: {{$uuid}}
+
+{
+  "ids": [1, 2, 3, 4, 5]
+}
+
+### 14. Escenario: Validar usuarios antes de inscribir en bootcamp
+POST {{baseUrl}}/users/check-exists
+Content-Type: application/json
+x-message-id: {{$uuid}}
+
+{
+  "ids": [2, 3, 4, 5]
+}
+
+### 15. Escenario: Obtener información de usuarios inscritos para reporte
+POST {{baseUrl}}/users/by-ids
+Content-Type: application/json
+x-message-id: {{$uuid}}
+
+{
+  "ids": [2, 3, 4]
+}
+
+### 16. Metrics Endpoint
+GET {{baseUrl}}/actuator/metrics
+Accept: application/json
+
+### 17. Prometheus Metrics
+GET {{baseUrl}}/actuator/prometheus
+Accept: text/plain
