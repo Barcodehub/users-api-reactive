@@ -9,6 +9,7 @@ import java.util.List;
 public interface UserPersistencePort {
     Mono<User> save(User user);
     Mono<User> findById(Long id);
+    Mono<User> findByEmail(String email);
     Mono<Boolean> existsByEmail(String email);
     Flux<Long> findExistingIdsByIds(List<Long> ids);
     Flux<User> findAllByIdIn(List<Long> ids);

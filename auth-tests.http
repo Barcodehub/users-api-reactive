@@ -1,0 +1,311 @@
+### ==========================
+### AUTENTICACIÓN JWT - TESTS
+### ==========================
+
+### Variables
+@baseUrl = http://localhost:8080
+@contentType = application/json
+@messageId = test-{{$timestamp}}
+
+### ==========================
+### 1. REGISTRO DE USUARIOS
+### ==========================
+
+### Crear Usuario Normal
+POST {{baseUrl}}/users
+Content-Type: {{contentType}}
+X-Message-Id: {{messageId}}
+
+{
+  "name": "John Doe",
+  "email": "john.doe@example.com",
+  "password": "password123",
+  "isAdmin": false
+}
+
+### Crear Usuario Administrador
+POST {{baseUrl}}/users
+Content-Type: {{contentType}}
+X-Message-Id: {{messageId}}
+
+{
+  "name": "Admin User",
+  "email": "admin@example.com",
+  "password": "admin123",
+  "isAdmin": true
+}
+
+### Crear Usuario para Inscripción Bootcamp 1
+POST {{baseUrl}}/users
+Content-Type: {{contentType}}
+X-Message-Id: {{messageId}}
+
+{
+  "name": "Maria Garcia",
+  "email": "maria.garcia@example.com",
+  "password": "maria123",
+  "isAdmin": false
+}
+
+### Crear Usuario para Inscripción Bootcamp 2
+POST {{baseUrl}}/users
+Content-Type: {{contentType}}
+X-Message-Id: {{messageId}}
+
+{
+  "name": "Carlos Lopez",
+  "email": "carlos.lopez@example.com",
+  "password": "carlos123",
+  "isAdmin": false
+}
+
+### ==========================
+### 2. AUTENTICACIÓN (LOGIN)
+### ==========================
+
+### Login Usuario Normal
+# @name loginUser
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+X-Message-Id: {{messageId}}
+
+{
+  "email": "john.doe@example.com",
+  "password": "password123"
+}
+
+### Login Usuario Administrador
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+X-Message-Id: {{messageId}}
+
+{
+  "email": "admin@example.com",
+  "password": "admin123"
+}
+
+### Login Usuario Maria
+# @name loginMaria
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+X-Message-Id: {{messageId}}
+
+{
+  "email": "maria.garcia@example.com",
+  "password": "maria123"
+}
+
+### Login Usuario Carlos
+# @name loginCarlos
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+X-Message-Id: {{messageId}}
+
+{
+  "email": "carlos.lopez@example.com",
+  "password": "carlos123"
+}
+
+### Login con Credenciales Inválidas (debe fallar)
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+X-Message-Id: {{messageId}}
+
+{
+  "email": "john.doe@example.com",
+  "password": "wrongpassword"
+}
+
+### Login con Email Inexistente (debe fallar)
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+X-Message-Id: {{messageId}}
+
+{
+  "email": "noexiste@example.com",
+  "password": "password123"
+}
+
+### ==========================
+### 3. OBTENER USUARIO POR ID
+### ==========================
+
+### Obtener Usuario por ID (con token)
+# Reemplazar {token} con el token obtenido del login
+GET {{baseUrl}}/users/1
+Authorization: Bearer {token}
+X-Message-Id: {{messageId}}
+
+### Obtener Usuario por ID (sin token - debe fallar)
+GET {{baseUrl}}/users/1
+X-Message-Id: {{messageId}}
+
+### Obtener Usuario por ID (token inválido - debe fallar)
+GET {{baseUrl}}/users/1
+Authorization: Bearer invalid-token-here
+X-Message-Id: {{messageId}}
+
+### Obtener Usuario Inexistente (debe fallar)
+GET {{baseUrl}}/users/999
+Authorization: Bearer {token}
+X-Message-Id: {{messageId}}
+
+### ==========================
+### 4. VERIFICAR USUARIOS EXISTEN
+### ==========================
+
+### Verificar Usuarios Existen
+POST {{baseUrl}}/users/check-exists
+Content-Type: {{contentType}}
+Authorization: Bearer {token}
+X-Message-Id: {{messageId}}
+
+{
+  "ids": [1, 2, 3, 999]
+}
+
+### Verificar con Lista Vacía
+POST {{baseUrl}}/users/check-exists
+Content-Type: {{contentType}}
+Authorization: Bearer {token}
+X-Message-Id: {{messageId}}
+
+{
+  "ids": []
+}
+
+### ==========================
+### 5. OBTENER USUARIOS POR IDs
+### ==========================
+
+### Obtener Usuarios por IDs
+POST {{baseUrl}}/users/by-ids
+Content-Type: {{contentType}}
+Authorization: Bearer {token}
+X-Message-Id: {{messageId}}
+
+{
+  "ids": [1, 2]
+}
+
+### Obtener Usuarios por IDs (algunos no existen)
+POST {{baseUrl}}/users/by-ids
+Content-Type: {{contentType}}
+Authorization: Bearer {token}
+X-Message-Id: {{messageId}}
+
+{
+  "ids": [1, 999, 2, 888]
+}
+
+### ==========================
+### 6. CASOS DE ERROR
+### ==========================
+
+### Registro sin Password (debe fallar)
+POST {{baseUrl}}/users
+Content-Type: {{contentType}}
+X-Message-Id: {{messageId}}
+
+{
+  "name": "Test User",
+  "email": "test@example.com",
+  "isAdmin": false
+}
+
+### Registro con Email Duplicado (debe fallar)
+POST {{baseUrl}}/users
+Content-Type: {{contentType}}
+X-Message-Id: {{messageId}}
+
+{
+  "name": "Duplicate User",
+  "email": "john.doe@example.com",
+  "password": "password123",
+  "isAdmin": false
+}
+
+### Login sin Email (debe fallar)
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+X-Message-Id: {{messageId}}
+
+{
+  "password": "password123"
+}
+
+### Login sin Password (debe fallar)
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+X-Message-Id: {{messageId}}
+
+{
+  "email": "john.doe@example.com"
+}
+
+### ==========================
+### 7. VALIDACIÓN DE TOKEN EXPIRADO
+### ==========================
+
+### Para probar token expirado:
+### 1. Configurar jwt.expiration a un valor bajo (ej: 5000 = 5 segundos)
+### 2. Hacer login y obtener token
+### 3. Esperar 6 segundos
+### 4. Intentar usar el token (debe fallar con TOKEN_EXPIRED)
+
+GET {{baseUrl}}/users/1
+Authorization: Bearer {expired-token}
+X-Message-Id: {{messageId}}
+
+### ==========================
+### 8. ACTUATOR ENDPOINTS (No requieren auth)
+### ==========================
+
+### Health Check
+GET {{baseUrl}}/actuator/health
+
+### Metrics
+GET {{baseUrl}}/actuator/metrics
+
+### ==========================
+### NOTAS DE USO
+### ==========================
+
+# 1. Reemplazar {token} con el token JWT obtenido del login
+# 2. El token se encuentra en el campo "token" de la respuesta del login
+# 3. Los tokens expiran en 1 hora (configurable)
+# 4. El messageId se genera automáticamente con timestamp
+
+### ==========================
+### EJEMPLO DE FLUJO COMPLETO
+### ==========================
+
+# PASO 1: Registrar usuario
+# PASO 2: Hacer login y guardar el token
+# PASO 3: Usar el token en los headers de las siguientes peticiones
+# PASO 4: El payload del token contiene: userId, email, isAdmin
+
+### ==========================
+### ESTRUCTURA DEL TOKEN JWT
+### ==========================
+
+# El token JWT decodificado tiene la siguiente estructura:
+# {
+#   "sub": "john.doe@example.com",
+#   "userId": 1,
+#   "isAdmin": false,
+#   "iat": 1737388800,
+#   "exp": 1737392400
+# }
+
+### ==========================
+### ROLES Y PERMISOS
+### ==========================
+
+# - isAdmin: false → ROLE_USER
+# - isAdmin: true  → ROLE_ADMIN
+#
+# Actualmente todos los endpoints autenticados están disponibles
+# para ambos roles. Se puede extender el SecurityConfig para
+# agregar autorización basada en roles.

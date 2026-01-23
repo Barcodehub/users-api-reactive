@@ -20,7 +20,13 @@ public enum TechnicalMessage {
     USER_EMAIL_TOO_LONG("400", "User email cannot exceed 150 characters", "email"),
     USER_EMAIL_INVALID("400", "User email format is invalid", "email"),
     USER_ROLE_REQUIRED("400", "User role (isAdmin) is required", "isAdmin"),
-    USER_ID_REQUIRED("400", "User ID is required", "id")
+    USER_ID_REQUIRED("400", "User ID is required", "id"),
+    USER_PASSWORD_REQUIRED("400", "User password is required", "password"),
+    INVALID_CREDENTIALS("401", "Invalid email or password", "credentials"),
+    TOKEN_EXPIRED("401", "Token has expired", "token"),
+    TOKEN_INVALID("401", "Token is invalid", "token"),
+    TOKEN_MISSING("401", "Authentication token is missing", "token"),
+    UNAUTHORIZED("401", "Unauthorized access", "")
     ;
 
     private final String code;

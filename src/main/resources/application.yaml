@@ -53,3 +53,4 @@ resilience4j:
       default:
         maxConcurrentCalls: 10
         maxWaitDuration: 500ms
+

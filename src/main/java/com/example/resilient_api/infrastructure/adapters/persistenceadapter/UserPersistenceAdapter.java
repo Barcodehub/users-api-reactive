@@ -29,6 +29,12 @@ public class UserPersistenceAdapter implements UserPersistencePort {
     }
 
     @Override
+    public Mono<User> findByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .map(userEntityMapper::toModel);
+    }
+
+    @Override
     public Mono<Boolean> existsByEmail(String email) {
         return userRepository.findByEmail(email)
                 .hasElement();

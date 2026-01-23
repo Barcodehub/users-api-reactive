@@ -1,5 +1,6 @@
 package com.example.resilient_api.infrastructure.entrypoints;
 
+import com.example.resilient_api.infrastructure.entrypoints.handler.AuthHandler;
 import com.example.resilient_api.infrastructure.entrypoints.handler.UserHandlerImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,8 +14,9 @@ import static org.springframework.web.reactive.function.server.RouterFunctions.r
 @Configuration
 public class RouterRest {
     @Bean
-    public RouterFunction<ServerResponse> routerFunction(UserHandlerImpl userHandler) {
-        return route(POST("/users"), userHandler::createUser)
+    public RouterFunction<ServerResponse> routerFunction(UserHandlerImpl userHandler, AuthHandler authHandler) {
+        return route(POST("/auth/login"), authHandler::login)
+            .andRoute(POST("/users"), userHandler::createUser)
             .andRoute(GET("/users/{id}"), userHandler::getUserById)
             .andRoute(POST("/users/check-exists"), userHandler::checkUsersExist)
             .andRoute(POST("/users/by-ids"), userHandler::getUsersByIds);

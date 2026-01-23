@@ -1,5 +1,6 @@
 package com.example.resilient_api.domain.usecase;
 
+import com.example.resilient_api.domain.api.PasswordEncoderPort;
 import com.example.resilient_api.domain.enums.TechnicalMessage;
 import com.example.resilient_api.domain.exceptions.BusinessException;
 import com.example.resilient_api.domain.model.User;
@@ -20,9 +21,11 @@ public class UserUseCase implements UserServicePort {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 
     private final UserPersistencePort userPersistencePort;
+    private final PasswordEncoderPort passwordEncoderPort;
 
-    public UserUseCase(UserPersistencePort userPersistencePort) {
+    public UserUseCase(UserPersistencePort userPersistencePort, PasswordEncoderPort passwordEncoderPort) {
         this.userPersistencePort = userPersistencePort;
+        this.passwordEncoderPort = passwordEncoderPort;
     }
 
     @Override
@@ -31,7 +34,11 @@ public class UserUseCase implements UserServicePort {
                 .then(userPersistencePort.existsByEmail(user.email()))
                 .filter(exists -> !exists)
                 .switchIfEmpty(Mono.error(new BusinessException(TechnicalMessage.USER_ALREADY_EXISTS)))
-                .flatMap(exists -> userPersistencePort.save(user));
+                .map(exists -> {
+                    String encodedPassword = passwordEncoderPort.encode(user.password());
+                    return new User(user.id(), user.name(), user.email(), encodedPassword, user.isAdmin());
+                })
+                .flatMap(userPersistencePort::save);
     }
 
     @Override
@@ -75,6 +82,9 @@ public class UserUseCase implements UserServicePort {
         }
         if (user.email() == null || user.email().trim().isEmpty()) {
             return Mono.error(new BusinessException(TechnicalMessage.USER_EMAIL_REQUIRED));
+        }
+        if (user.password() == null || user.password().trim().isEmpty()) {
+            return Mono.error(new BusinessException(TechnicalMessage.USER_PASSWORD_REQUIRED));
         }
         if (user.name().length() > MAX_NAME_LENGTH) {
             return Mono.error(new BusinessException(TechnicalMessage.USER_NAME_TOO_LONG));

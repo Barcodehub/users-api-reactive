@@ -18,6 +18,7 @@ public class UserEntity {
     private Long id;
     private String name;
     private String email;
+    private String password;
 
     @Column("is_admin")
     private Boolean isAdmin;
