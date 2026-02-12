@@ -30,8 +30,14 @@ public class UserUseCase implements UserServicePort {
 
     @Override
     public Mono<User> registerUser(User user, String messageId) {
-        return validateUser(user)
-                .then(userPersistencePort.existsByEmail(user.email()))
+        return Mono.defer(() -> {
+                    try {
+                        validateUserSync(user);
+                        return userPersistencePort.existsByEmail(user.email());
+                    } catch (BusinessException e) {
+                        return Mono.error(e);
+                    }
+                })
                 .filter(exists -> !exists)
                 .switchIfEmpty(Mono.error(new BusinessException(TechnicalMessage.USER_ALREADY_EXISTS)))
                 .map(exists -> {
@@ -76,29 +82,44 @@ public class UserUseCase implements UserServicePort {
         return userPersistencePort.findAllByIdIn(ids);
     }
 
-    private Mono<Void> validateUser(User user) {
-        if (user.name() == null || user.name().trim().isEmpty()) {
-            return Mono.error(new BusinessException(TechnicalMessage.USER_NAME_REQUIRED));
+    private void validateUserSync(User user) {
+        // Validaciones de nulidad primero
+        if (user.name() == null) {
+            throw new BusinessException(TechnicalMessage.USER_NAME_REQUIRED);
         }
-        if (user.email() == null || user.email().trim().isEmpty()) {
-            return Mono.error(new BusinessException(TechnicalMessage.USER_EMAIL_REQUIRED));
+        if (user.email() == null) {
+            throw new BusinessException(TechnicalMessage.USER_EMAIL_REQUIRED);
         }
-        if (user.password() == null || user.password().trim().isEmpty()) {
-            return Mono.error(new BusinessException(TechnicalMessage.USER_PASSWORD_REQUIRED));
-        }
-        if (user.name().length() > MAX_NAME_LENGTH) {
-            return Mono.error(new BusinessException(TechnicalMessage.USER_NAME_TOO_LONG));
-        }
-        if (user.email().length() > MAX_EMAIL_LENGTH) {
-            return Mono.error(new BusinessException(TechnicalMessage.USER_EMAIL_TOO_LONG));
-        }
-        if (!EMAIL_PATTERN.matcher(user.email()).matches()) {
-            return Mono.error(new BusinessException(TechnicalMessage.USER_EMAIL_INVALID));
+        if (user.password() == null) {
+            throw new BusinessException(TechnicalMessage.USER_PASSWORD_REQUIRED);
         }
         if (user.isAdmin() == null) {
-            return Mono.error(new BusinessException(TechnicalMessage.USER_ROLE_REQUIRED));
+            throw new BusinessException(TechnicalMessage.USER_ROLE_REQUIRED);
         }
-        return Mono.empty();
+
+        // Validaciones de vacío (ya sabemos que no son null)
+        if (user.name().trim().isEmpty()) {
+            throw new BusinessException(TechnicalMessage.USER_NAME_REQUIRED);
+        }
+        if (user.email().trim().isEmpty()) {
+            throw new BusinessException(TechnicalMessage.USER_EMAIL_REQUIRED);
+        }
+        if (user.password().trim().isEmpty()) {
+            throw new BusinessException(TechnicalMessage.USER_PASSWORD_REQUIRED);
+        }
+
+        // Validaciones de longitud
+        if (user.name().length() > MAX_NAME_LENGTH) {
+            throw new BusinessException(TechnicalMessage.USER_NAME_TOO_LONG);
+        }
+        if (user.email().length() > MAX_EMAIL_LENGTH) {
+            throw new BusinessException(TechnicalMessage.USER_EMAIL_TOO_LONG);
+        }
+
+        // Validación de formato de email
+        if (!EMAIL_PATTERN.matcher(user.email()).matches()) {
+            throw new BusinessException(TechnicalMessage.USER_EMAIL_INVALID);
+        }
     }
 }
 

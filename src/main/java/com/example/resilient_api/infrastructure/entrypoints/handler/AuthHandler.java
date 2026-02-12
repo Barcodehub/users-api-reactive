@@ -8,6 +8,8 @@ import com.example.resilient_api.infrastructure.entrypoints.dto.LoginRequestDTO;
 import com.example.resilient_api.infrastructure.entrypoints.mapper.AuthMapper;
 import com.example.resilient_api.infrastructure.entrypoints.util.APIResponse;
 import com.example.resilient_api.infrastructure.entrypoints.util.ErrorDTO;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -30,6 +32,16 @@ public class AuthHandler {
     private final AuthServicePort authServicePort;
     private final AuthMapper authMapper;
 
+    @Operation(
+        operationId = "login",
+        summary = "Login de usuario",
+        description = "Autentica un usuario y devuelve un token JWT (endpoint público)",
+        tags = {"Autenticación"},
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Login exitoso, retorna token JWT"),
+            @ApiResponse(responseCode = "401", description = "Credenciales inválidas")
+        }
+    )
     public Mono<ServerResponse> login(ServerRequest request) {
         String messageId = getMessageId(request);
         return request.bodyToMono(LoginRequestDTO.class)

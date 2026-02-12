@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.3.6'
 	id 'io.spring.dependency-management' version '1.1.6'
+	id 'jacoco'
 }
 
 group = 'com.example'
@@ -38,6 +39,10 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-aop'
 	implementation 'org.postgresql:r2dbc-postgresql'
 	implementation 'org.mapstruct:mapstruct:1.6.0'
+
+	// Swagger/OpenAPI
+	implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.3.0'
+
 	annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.0'
 	annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
 	compileOnly 'org.projectlombok:lombok'
@@ -57,4 +62,47 @@ dependencyManagement {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	finalizedBy jacocoTestReport
 }
+
+jacoco {
+	toolVersion = "0.8.11"
+}
+
+jacocoTestReport {
+	dependsOn test
+	reports {
+		xml.required = true
+		html.required = true
+	}
+	afterEvaluate {
+		classDirectories.setFrom(files(classDirectories.files.collect {
+			fileTree(dir: it, include: [
+				'**/domain/**'
+			], exclude: [
+				'**/infrastructure/**',
+				'**/application/**'
+			])
+		}))
+	}
+}
+
+jacocoTestCoverageVerification {
+	violationRules {
+		rule {
+			element = 'CLASS'
+			limit {
+				counter = 'LINE'
+				value = 'COVEREDRATIO'
+				minimum = 0.90
+			}
+			includes = ['com.example.resilient_api.domain.*']
+			excludes = [
+				'com.example.resilient_api.infrastructure.*',
+				'com.example.resilient_api.application.*'
+			]
+		}
+	}
+}
+
+check.dependsOn jacocoTestCoverageVerification

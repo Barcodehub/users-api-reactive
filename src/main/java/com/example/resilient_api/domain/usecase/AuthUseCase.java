@@ -26,8 +26,14 @@ public class AuthUseCase implements AuthServicePort {
     public Mono<LoginResponse> login(LoginRequest loginRequest, String messageId) {
         log.info("Starting login process for email: {} with messageId: {}", loginRequest.email(), messageId);
 
-        return validateLoginRequest(loginRequest)
-                .then(userPersistencePort.findByEmail(loginRequest.email()))
+        return Mono.defer(() -> {
+                    try {
+                        validateLoginRequestSync(loginRequest);
+                        return userPersistencePort.findByEmail(loginRequest.email());
+                    } catch (BusinessException e) {
+                        return Mono.error(e);
+                    }
+                })
                 .switchIfEmpty(Mono.error(new BusinessException(TechnicalMessage.INVALID_CREDENTIALS)))
                 .flatMap(user -> validatePassword(loginRequest.password(), user))
                 .map(this::buildJwtPayload)
@@ -42,14 +48,20 @@ public class AuthUseCase implements AuthServicePort {
         return jwtPort.validateAndExtractPayload(token);
     }
 
-    private Mono<Void> validateLoginRequest(LoginRequest loginRequest) {
-        if (loginRequest.email() == null || loginRequest.email().isBlank()) {
-            return Mono.error(new BusinessException(TechnicalMessage.USER_EMAIL_REQUIRED));
+    private void validateLoginRequestSync(LoginRequest loginRequest) {
+        // Verificar null primero, luego blank
+        if (loginRequest.email() == null) {
+            throw new BusinessException(TechnicalMessage.USER_EMAIL_REQUIRED);
         }
-        if (loginRequest.password() == null || loginRequest.password().isBlank()) {
-            return Mono.error(new BusinessException(TechnicalMessage.USER_PASSWORD_REQUIRED));
+        if (loginRequest.email().isBlank()) {
+            throw new BusinessException(TechnicalMessage.USER_EMAIL_REQUIRED);
         }
-        return Mono.empty();
+        if (loginRequest.password() == null) {
+            throw new BusinessException(TechnicalMessage.USER_PASSWORD_REQUIRED);
+        }
+        if (loginRequest.password().isBlank()) {
+            throw new BusinessException(TechnicalMessage.USER_PASSWORD_REQUIRED);
+        }
     }
 
     private Mono<User> validatePassword(String rawPassword, User user) {

@@ -9,6 +9,10 @@ import com.example.resilient_api.infrastructure.entrypoints.dto.UserIdsRequest;
 import com.example.resilient_api.infrastructure.entrypoints.mapper.UserMapper;
 import com.example.resilient_api.infrastructure.entrypoints.util.APIResponse;
 import com.example.resilient_api.infrastructure.entrypoints.util.ErrorDTO;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -31,6 +35,16 @@ public class UserHandlerImpl {
     private final UserServicePort userServicePort;
     private final UserMapper userMapper;
 
+    @Operation(
+        operationId = "createUser",
+        summary = "Registrar usuario",
+        description = "Crea un nuevo usuario (endpoint público)",
+        tags = {"Usuarios"},
+        responses = {
+            @ApiResponse(responseCode = "201", description = "Usuario creado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Datos inválidos o email duplicado")
+        }
+    )
     public Mono<ServerResponse> createUser(ServerRequest request) {
         String messageId = getMessageId(request);
         return request.bodyToMono(UserDTO.class)
@@ -47,6 +61,13 @@ public class UserHandlerImpl {
                 .onErrorResume(ex -> handleUnexpectedException(ex, messageId));
     }
 
+    @Operation(
+        operationId = "getUserById",
+        summary = "Obtener usuario por ID",
+        description = "Obtiene un usuario por su ID (endpoint interno)",
+        tags = {"Usuarios"},
+        parameters = @Parameter(name = "id", in = ParameterIn.PATH, description = "ID del usuario")
+    )
     public Mono<ServerResponse> getUserById(ServerRequest request) {
         String messageId = getMessageId(request);
         try {
@@ -67,6 +88,12 @@ public class UserHandlerImpl {
         }
     }
 
+    @Operation(
+        operationId = "checkUsersExist",
+        summary = "Verificar existencia de usuarios",
+        description = "Verifica si los usuarios existen (endpoint interno)",
+        tags = {"Usuarios"}
+    )
     public Mono<ServerResponse> checkUsersExist(ServerRequest request) {
         String messageId = getMessageId(request);
         return request.bodyToMono(UserIdsRequest.class)
@@ -82,6 +109,12 @@ public class UserHandlerImpl {
                 .onErrorResume(ex -> handleUnexpectedException(ex, messageId));
     }
 
+    @Operation(
+        operationId = "getUsersByIds",
+        summary = "Obtener usuarios por IDs",
+        description = "Obtiene usuarios por sus IDs (endpoint interno)",
+        tags = {"Usuarios"}
+    )
     public Mono<ServerResponse> getUsersByIds(ServerRequest request) {
         String messageId = getMessageId(request);
         return request.bodyToMono(UserIdsRequest.class)
